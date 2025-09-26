@@ -56,11 +56,13 @@ public class OkHttp {
     }
 
     public static String string(String url, Map<String, String> params, Map<String, String> header) {
-        return new OkRequest(GET, url, params, header).execute(client()).getBody();
+        return url.startsWith("http") ? new OkRequest(GET, url, params, header).execute(client()).getBody() : "";
+        // return new OkRequest(GET, url, params, header).execute(client()).getBody();
     }
 
     public static String string(String url, Map<String, String> params, Map<String, String> header, long timeout) {
-        return new OkRequest(GET, url, params, header).execute(client(timeout)).getBody();
+        return url.startsWith("http") ? new OkRequest(GET, url, params, header).execute(client(timeout)).getBody() : "";
+        // return new OkRequest(GET, url, params, header).execute(client(timeout)).getBody();
     }
 
     public static String post(String url, Map<String, String> params) {

@@ -28,12 +28,16 @@ import java.util.Map;
  */
 public class Jianpian extends Spider {
 
+    // private final String siteUrl = "https://ij1men.slsw6.com";
     private String siteUrl = "https://ev5356.970xw.com";
     private String imgDomain;
     private String extend;
 
     private Map<String, String> getHeader() {
         Map<String, String> headers = new HashMap<>();
+        // headers.put("user-agent", "Mozilla/5.0 (Linux; Android 11; Redmi K30 Pro Zoom Edition Build/RKQ1.200826.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/90.0.4430.210 Mobile Safari/537.36;webank/h5face;webank/1.0;netType:NETWORK_WIFI;appVersion:416;packageName:com.jp3.xg3");
+        // headers.put("accept", "application/json, text/plain, */*");
+        // headers.put("x-requested-with", "com.jp3.xg3");
         headers.put("User-Agent", "Mozilla/5.0 (Linux; Android 9; V2196A Build/PQ3A.190705.08211809; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Mobile Safari/537.36;webank/h5face;webank/1.0;netType:NETWORK_WIFI;appVersion:416;packageName:com.jp3.xg3");
         headers.put("Referer", siteUrl);
         return headers;
@@ -71,6 +75,7 @@ public class Jianpian extends Spider {
         List<Vod> list = new ArrayList<>();
         String url = siteUrl + "/api/slide/list?pos_id=88";
         Resp resp = Resp.objectFrom(OkHttp.string(url, getHeader()));
+        // for (Data data : resp.getData()) list.add(data.homeVod());
         for (Data data : resp.getData()) list.add(data.homeVod(imgDomain));
         return Result.string(list);
     }
@@ -82,6 +87,7 @@ public class Jianpian extends Spider {
             List<Vod> list = new ArrayList<>();
             String url = siteUrl + String.format("/api/dyTag/list?category_id=%s&page=%s", tid, pg);
             Resp resp = Resp.objectFrom(OkHttp.string(url, getHeader()));
+            // for (Data data : resp.getData()) for (Data dataList : data.getDataList()) list.add(dataList.vod());
             for (Data data : resp.getData()) for (Data dataList : data.getDataList()) list.add(dataList.vod(imgDomain));
             return Result.get().page().vod(list).string();
         } else {
@@ -93,6 +99,7 @@ public class Jianpian extends Spider {
             String by = ext.get("by") == null ? "updata" : ext.get("by");
             String url = siteUrl + String.format("/api/crumb/list?fcate_pid=%s&area=%s&year=%s&type=0&sort=%s&page=%s&category_id=", tid, area, year, by, pg);
             Resp resp = Resp.objectFrom(OkHttp.string(url, getHeader()));
+            // for (Data data : resp.getData()) list.add(data.vod());
             for (Data data : resp.getData()) list.add(data.vod(imgDomain));
             return Result.string(list);
         }
@@ -102,6 +109,7 @@ public class Jianpian extends Spider {
     public String detailContent(List<String> ids) throws Exception {
         String url = siteUrl + "/api/video/detailv2?id=" + ids.get(0);
         Data data = Detail.objectFrom(OkHttp.string(url, getHeader())).getData();
+        // Vod vod = data.vod();
         Vod vod = data.vod(imgDomain);
         vod.setVodPlayFrom(data.getVodFrom());
         vod.setVodYear(data.getYear());
@@ -133,6 +141,7 @@ public class Jianpian extends Spider {
         List<Vod> list = new ArrayList<>();
         String url = siteUrl + String.format("/api/v2/search/videoV2?key=%s&category_id=88&page=%s&pageSize=20", URLEncoder.encode(key), pg);
         Search search = Search.objectFrom(OkHttp.string(url, getHeader()));
+        // for (Search data : search.getData()) list.add(data.vod());
         for (Search data : search.getData()) list.add(data.vod(imgDomain));
         return Result.string(list);
     }
