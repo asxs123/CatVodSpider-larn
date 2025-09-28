@@ -1,0 +1,174 @@
+name: Merge-upstream 合并上游
+on:
+  # 当代码推送到仓库时触发。
+  # push:
+  #   # 指定文件路径会触发工作流程
+  #   paths:
+  #     - '.github/workflows/upstream.yml'
+  #     - '.gitignore'
+  #     - '.github/diy/**'
+  # # 按计划定期触发，例如每 12 小时一次。
+  # schedule:
+  #   - cron: 0 */12 * * *
+  # 允许手动触发工作流程。
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'ssh'
+        required: false
+        default: 'false'
+  # # 当仓库被关注时触发。
+  # watch:
+  #   types: started
+  # # 通过外部事件触发。
+  # repository_dispatch:
+
+jobs:
+  merge:
+    runs-on: Ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+      with:
+        fetch-depth: 0
+    
+    - name: Set git identity 设置git标识
+      run : |
+        git config --global user.email "54346276+asxs123@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        sudo timedatectl set-timezone "Asia/Shanghai"
+
+    - name: Syn upstream  同步上游
+      run: |
+        # 启用扩展的模式匹配
+        shopt -s extglob
+        # 关闭脚本中的错误终止
+        set +e
+        # 从缓存中删除所有文件,不显示任何输出
+        git rm -r --cache * >/dev/null 2>&1 &
+        # 删除除 .github/diy 以外的所有文件夹。find 查找当前目录下的所有文件夹，-maxdepth 0 只搜索当前目录，-type d 只搜索文件夹，! -name ".github/diy" 排除名为 .github/diy 的文件夹。
+        rm -rf `find ./* -maxdepth 0 -type d ! -name "app/src/main/java/com/github/catvod/spider"` >/dev/null 2>&1
+        function git_clone() {
+          # 克隆指定仓库 --depth 1 只克隆最近一次提交 $1 和 $2 是函数的参数，分别表示仓库 URL 和目标目录。
+          git clone --depth 1 $1 $2
+          if [ "$?" != 0 ]; then
+            # 命令执行失败,输出错误信息,获取当前进程的 PID,终止当前进程
+            echo "error on $1"
+            pid="$( ps -q $$ )"
+            kill $pid
+          fi
+        }
+        (
+          git_clone https://github.com/FongMi/CatVodSpider temp-dir
+          mv temp-dir/* temp-dir/.[^.]* .
+          rm -rf temp-dir
+          rm -rf app/src/main/java/com/github/catvod/spider/Doll.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Eighteen.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Hanime.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Jable.java
+          rm -rf app/src/main/java/com/github/catvod/spider/JavDb.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Miss.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Kanqiu.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Kugou.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Star.java
+          rm -rf app/src/main/java/com/github/catvod/spider/TvDy.java
+          rm -rf app/src/main/java/com/github/catvod/spider/PanSearch.java
+          rm -rf app/src/main/java/com/github/catvod/spider/PanSou.java
+          rm -rf app/src/main/java/com/github/catvod/spider/UpYun.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Wogg.java
+          rm -rf app/src/main/java/com/github/catvod/spider/XiaoZhiTiao.java
+          rm -rf app/src/main/java/com/github/catvod/spider/YiSo.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Zhaozy.java
+          rm -rf app/src/main/java/com/github/catvod/spider/Feiyang.java
+          rm -rf app/src/main/java/com/github/catvod/net/OkHttp.java
+          sed -i "/Doll/d" app/src/main/java/com/github/catvod/debug/MainActivity.java
+          rm -rf app/src/main/java/com/github/catvod/spider/JustLive.java
+          sed -i 's/compileSdk 35/compileSdk 34/g' app/build.gradle
+          sed -i 's/minSdk 21/minSdk 16/g' app/build.gradle
+          sed -i 's/targetSdk 35/targetSdk 33/g' app/build.gradle
+          sed -i "4i\    id 'org.jetbrains.kotlin.android'" app/build.gradle
+          sed -i "6i\    id 'org.jetbrains.kotlin.android' version '2.0.10' apply false" build.gradle
+          curl -L https://raw.githubusercontent.com/asxs123/CatVodSpider_test/refs/heads/241215/app/src/main/java/com/github/catvod/spider/Douban.java > app/src/main/java/com/github/catvod/spider/Douban.java
+          curl -L https://raw.githubusercontent.com/asxs123/CatVodSpider_test/refs/heads/241215/app/src/main/java/com/github/catvod/spider/AppYsV2.java > app/src/main/java/com/github/catvod/spider/AppYsV2.java
+          curl -L https://raw.githubusercontent.com/asxs123/CatVodSpider_test/refs/heads/241215/app/src/main/java/com/github/catvod/spider/FirstAid.java > app/src/main/java/com/github/catvod/spider/FirstAid.java
+        )
+        (
+          #增加lushunming爬虫
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/spider/Ikanbot.java > app/src/main/java/com/github/catvod/spider/Ikanbot.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/spider/TvDy.java > app/src/main/java/com/github/catvod/spider/TvDy.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/spider/XuanFeng.java > app/src/main/java/com/github/catvod/spider/XuanFeng.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/spider/Zxzj.java > app/src/main/java/com/github/catvod/spider/Zxzj.java
+          sed -i 's#"福利", ##g' app/src/main/java/com/github/catvod/spider/TvDy.java
+          sed -i 's#"5", ##g' app/src/main/java/com/github/catvod/spider/TvDy.java
+          sed -i 's/http:\/\/zxzj\.shop/https:\/\/www\.zxzja\.com/g' app/src/main/java/com/github/catvod/spider/Zxzj.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/utils/ProxyVideo.java > app/src/main/java/com/github/catvod/utils/ProxyVideo.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/utils/Json.java > app/src/main/java/com/github/catvod/utils/Json.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/utils/Util.java > app/src/main/java/com/github/catvod/utils/Util.java
+          curl -L https://raw.githubusercontent.com/lushunming/AndroidCatVodSpider/refs/heads/mine/app/src/main/java/com/github/catvod/bean/Result.java > app/src/main/java/com/github/catvod/bean/Result.java
+        )
+        (
+          #增加zhixc爬虫
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/spider/Anime1.java > app/src/main/java/com/github/catvod/spider/Anime1.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/spider/IQIYI.java > app/src/main/java/com/github/catvod/spider/IQIYI.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/spider/MGTV.java > app/src/main/java/com/github/catvod/spider/MGTV.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/spider/PiaoHua.java > app/src/main/java/com/github/catvod/spider/PiaoHua.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/spider/SP360.java > app/src/main/java/com/github/catvod/spider/SP360.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/spider/Xunlei8.java > app/src/main/java/com/github/catvod/spider/Xunlei8.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/net/OkHttp.java > app/src/main/java/com/github/catvod/net/OkHttp.java
+          mkdir app/src/main/java/com/github/catvod/utils/okhttp
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/utils/okhttp/OkHttpUtil.java > app/src/main/java/com/github/catvod/utils/okhttp/OkHttpUtil.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/utils/okhttp/OKCallBack.java > app/src/main/java/com/github/catvod/utils/okhttp/OKCallBack.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/utils/okhttp/SSLSocketFactoryCompat.java > app/src/main/java/com/github/catvod/utils/SSLSocketFactoryCompat.java
+          curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/utils/okhttp/OKRequest.java > app/src/main/java/com/github/catvod/utils/okhttp/OKRequest.java
+          # mkdir app/src/main/java/com/github/catvod/parser
+          # curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/parser/JsonParallel.java > app/src/main/java/com/github/catvod/parser/JsonParallel.java
+          # curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/parser/JsonBasic.java > app/src/main/java/com/github/catvod/parser/JsonBasic.java
+          # curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/parser/JsonSequence.java > app/src/main/java/com/github/catvod/parser/JsonSequence.java
+          # curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/parser/MixDemo.java > app/src/main/java/com/github/catvod/parser/MixDemo.java
+          # curl -L https://raw.githubusercontent.com/zhixc/CatVodTVSpider/main/app/src/main/java/com/github/catvod/parser/MixWeb.java > app/src/main/java/com/github/catvod/parser/MixWeb.java
+        )
+        (
+          #增加xyzjhe爬虫
+          curl -L https://raw.githubusercontent.com/asxs123/CatVodSpider_test/refs/heads/main/app/src/main/java/com/github/catvod/spider/Nongm.java > app/src/main/java/com/github/catvod/spider/Nongm.java
+          curl -L https://raw.githubusercontent.com/asxs123/CatVodSpider_test/refs/heads/main/app/src/main/java/com/github/catvod/spider/DyGang.java > app/src/main/java/com/github/catvod/spider/DyGang.java
+        )
+        (
+          #增加zwm001爬虫
+          curl -L https://raw.githubusercontent.com/zwm001/JarMax/master/app/src/main/java/com/github/catvod/spider/Czsapp.java > app/src/main/java/com/github/catvod/spider/Czsapp.java
+          sed -i 's/localProxyUrl/getUrl/g' app/src/main/java/com/github/catvod/spider/Czsapp.java
+          curl -L https://raw.githubusercontent.com/zwm001/JarMax/master/app/src/main/java/com/github/catvod/utils/AES.java > app/src/main/java/com/github/catvod/utils/AES.java
+          curl -L https://raw.githubusercontent.com/zwm001/JarMax/master/app/src/main/java/com/github/catvod/utils/CBC.java > app/src/main/java/com/github/catvod/utils/CBC.java
+          curl -L https://raw.githubusercontent.com/zwm001/JarMax/master/app/src/main/java/com/github/catvod/utils/gZip.java > app/src/main/java/com/github/catvod/utils/gZip.java
+          curl -L https://raw.githubusercontent.com/zwm001/JarMax/master/app/src/main/java/com/github/catvod/utils/Misc.java > app/src/main/java/com/github/catvod/utils/Misc.java
+        )
+        (
+          #增加Mujinniao爬虫
+          curl -L https://raw.githubusercontent.com/Mujinniao/SP/refs/heads/main/app/src/main/java/com/github/catvod/spider/Btt.java > app/src/main/java/com/github/catvod/spider/Btt.java
+          sed -i 's/https:\/\/www\.bttwo\.net/https:\/\/www\.bttwo\.org/g' app/src/main/java/com/github/catvod/spider/Btt.java
+          curl -L https://raw.githubusercontent.com/Mujinniao/SP/refs/heads/main/app/src/main/java/com/github/catvod/spider/Dadag.java > app/src/main/java/com/github/catvod/spider/Dadag.java
+          sed -i 's/http:\/\/www\.dadagui\.me/https:\/\/www\.dadagui\.tv/g' app/src/main/java/com/github/catvod/spider/Dadag.java
+          curl -L https://raw.githubusercontent.com/Mujinniao/SP/refs/heads/main/app/src/main/java/com/github/catvod/spider/Wangfei.java > app/src/main/java/com/github/catvod/spider/Wangfei.java
+        )
+        
+    - name: Apply 应用
+      run: |
+        # 定义了一个数组 Emoji，其中包含了多个不同的 emoji 表情
+        Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
+        # 将当前目录下的所有文件添加到 Git 暂存区
+        git add .
+        # 创建一个提交，包含了随机选择的 emoji 和当前日期时间作为提交信息
+        git commit -m "${Emoji[$[$RANDOM % ${#Emoji[@]}]]} Sync $(date +%Y-%m-%d" "%H:%M:%S)"
+        # 撤销上一次提交，但保留更改
+        git reset --soft HEAD^
+        git add .
+        git commit -m "${Emoji[$[$RANDOM % ${#Emoji[@]}]]} Sync $(date +%Y-%m-%d" "%H:%M:%S)"
+        # 强制推送更改到远程仓库
+        git push -f
+
+    - name: Delete workflow runs 删除工作流运行
+      uses: Mattraks/delete-workflow-runs@main
+      continue-on-error: true
+      with:
+        retain_days: 1
+        keep_minimum_runs: 3
