@@ -16,6 +16,10 @@ android {
         targetSdk 34
     }
 
+    buildFeatures {
+        viewBinding true
+    }
+
     buildTypes {
         release {
             minifyEnabled true
