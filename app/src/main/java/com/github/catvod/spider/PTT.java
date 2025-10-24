@@ -18,6 +18,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,7 +47,20 @@ public class PTT extends Spider {
     public String homeContent(boolean filter) throws Exception {
         Document doc = Jsoup.parse(OkHttp.string(url, getHeader()));
         List<Class> classes = new ArrayList<>();
-        for (Element a : doc.select("li > a.px-2.px-sm-3.py-2.nav-link")) classes.add(new Class(a.attr("href").replace("/p/", ""), a.text()));
+        // for (Element a : doc.select("li > a.px-2.px-sm-3.py-2.nav-link")) classes.add(new Class(a.attr("href").replace("/p/", ""), a.text()));
+        // 需要排除的关键词
+        List<String> excludeKeywords = Arrays.asList("短劇", "體育");
+        
+        for (Element a : doc.select("li > a.px-2.px-sm-3.py-2.nav-link")) {
+            String text = a.text();
+            // 检查是否包含任何需要排除的关键词
+            boolean shouldExclude = excludeKeywords.stream().anyMatch(text::contains);
+            
+            // 如果不包含排除关键词，则添加到列表
+            if (!shouldExclude) {
+                classes.add(new Class(a.attr("href").replace("/p/", ""), text));
+            }
+        }
         return Result.string(classes, TextUtils.isEmpty(extend) ? Json.parse("{}") : Json.parse(OkHttp.string(extend)));
     }
 

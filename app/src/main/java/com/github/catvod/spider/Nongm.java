@@ -14,6 +14,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,10 +34,22 @@ public class Nongm extends Spider {
         List<Vod> list = new ArrayList<>();
         List<Class> classes = new ArrayList<>();
         Document doc = Jsoup.parse(OkHttp.string(siteUrl, getHeaders()));
+        // for (Element element : doc.select("#topnav > ul:nth-child(1) li")) {
+        //     String id = element.select("a").attr("href").split("-")[3];
+        //     String name = element.select("a").text();
+        //     classes.add(new Class(id, name));
+        // }
+        // 需要排除的关键词
+        List<String> excludeKeywords = Arrays.asList("短剧", "小姐姐", "音乐");
         for (Element element : doc.select("#topnav > ul:nth-child(1) li")) {
-            String id = element.select("a").attr("href").split("-")[3];
             String name = element.select("a").text();
-            classes.add(new Class(id, name));
+            // 检查是否包含任何需要排除的关键词
+            boolean shouldExclude = excludeKeywords.stream().anyMatch(name::contains);
+            
+            // 如果不包含排除关键词，则添加到列表
+            if (!shouldExclude) {
+                classes.add(new Class(element.select("a").attr("href").split("-")[3], name));
+            }
         }
         for (Element element : doc.select("section.mod:nth-child(3) > div:nth-child(2) ul.resize_list")) {
             String img = element.select("a div.pic img").attr("data-src");

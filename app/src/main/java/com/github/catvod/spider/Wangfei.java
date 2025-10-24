@@ -20,6 +20,7 @@ import org.jsoup.select.Elements;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,10 +44,15 @@ public class Wangfei extends Spider {
         List<Vod> list = new ArrayList<>();
         List<Class> classes = new ArrayList<>();
         Document doc = Jsoup.parse(OkHttp.string(siteUrl, getHeaders()));
+        // 需要排除的关键词
+        List<String> excludeKeywords = Arrays.asList("短剧");
         for (Element element : doc.select("li.swiper-slide > a:nth-child(1)")) {
-            if (element.attr("href").startsWith("/vod-show")) {
+            String name = element.attr("title");
+            // 检查是否包含任何需要排除的关键词
+            boolean shouldExclude = excludeKeywords.stream().anyMatch(name::contains);
+            if (element.attr("href").startsWith("/vod-show") && !shouldExclude) {
                 String id = element.attr("href").replaceAll("\\D+", "");
-                String name = element.attr("title");
+                // String name = element.attr("title");
                 classes.add(new Class(id, name));
             }
         }

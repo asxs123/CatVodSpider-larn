@@ -10,6 +10,7 @@ import com.github.catvod.bean.jianpian.Detail;
 import com.github.catvod.bean.jianpian.Resp;
 import com.github.catvod.bean.jianpian.Search;
 import com.github.catvod.crawler.Spider;
+import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.net.OkHttp;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -49,6 +50,7 @@ public class Jianpian extends Spider {
         String parts = domains.getAsJsonArray("Answer").get(0).getAsJsonObject().get("data").getAsString();
         parts = parts.replace("\"", "");
         String[] domain = parts.split(",");
+        // 遍历域名数组
         for (String d : domain) {
             siteUrl = "https://wangerniu." + d;
             String json = OkHttp.string(siteUrl + "/api/appAuthConfig");
@@ -64,7 +66,8 @@ public class Jianpian extends Spider {
     public String homeContent(boolean filter) throws Exception {
         List<Class> classes = new ArrayList<>();
         List<String> typeIds = Arrays.asList("1", "2", "3", "4", "50", "99");
-        List<String> typeNames = Arrays.asList("電影", "電視劇", "動漫", "綜藝", "紀錄片", "Netflix");
+        // List<String> typeNames = Arrays.asList("電影", "電視劇", "動漫", "綜藝", "紀錄片", "Netflix");
+        List<String> typeNames = Arrays.asList("电影", "电视剧", "动漫", "综艺", "纪录片", "Netflix");
         for (int i = 0; i < typeIds.size(); i++) classes.add(new Class(typeIds.get(i), typeNames.get(i)));
         return Result.string(classes, JsonParser.parseString(OkHttp.string(extend)));
     }
