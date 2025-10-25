@@ -8,6 +8,7 @@ import com.github.catvod.net.OkHttp;
 // import com.github.catvod.utils.AESEncryption;
 import com.github.catvod.utils.Crypto;
 import com.github.catvod.utils.Util;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -84,8 +85,10 @@ public class NCat extends Spider {
 
             }
         }
-        Integer total = (Integer.parseInt(pg) + 1) * 20;
-        return Result.get().page(Integer.parseInt(pg),Integer.parseInt(pg) + 1,20,total).vod(list).string();
+        // Integer total = (Integer.parseInt(pg) + 1) * 20;
+        int page = Integer.parseInt(pg), count = Integer.parseInt(pg) + 1, limit = 20, total = (Integer.parseInt(pg) + 1) * 20;
+        // return Result.get().page(Integer.parseInt(pg),Integer.parseInt(pg) + 1,20,total).vod(list).string();
+        return Result.get().vod(list).page(page, count, limit, total).string();
     }
 
     @Override

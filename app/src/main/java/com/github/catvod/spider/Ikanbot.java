@@ -80,8 +80,10 @@ public class Ikanbot extends Spider {
         }
         Document doc = Jsoup.parse(OkHttp.string(target.concat(".html"), getHeaders()));
         List<Vod> list = parseVods(doc);
-        Integer total = (Integer.parseInt(pg) + 1) * 24;
-        return Result.get().vod(list).page(Integer.parseInt(pg), Integer.parseInt(pg) + 1, 24, total).string();
+        // Integer total = (Integer.parseInt(pg) + 1) * 24;
+        int page = Integer.parseInt(pg), count = Integer.parseInt(pg) + 1, limit = 24, total = (Integer.parseInt(pg) + 1) * 24;
+        // return Result.get().vod(list).page(Integer.parseInt(pg), Integer.parseInt(pg) + 1, 24, total).string();
+        return Result.get().vod(list).page(page, count, limit, total).string();
     }
 
     @Override

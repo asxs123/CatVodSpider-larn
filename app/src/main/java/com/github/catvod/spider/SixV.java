@@ -73,34 +73,38 @@ public class SixV extends Spider {
         return header;
     }
 
-    private Map<String, String> getSearchHeader() {
-        Map<String, String> header = new HashMap<>();
-        header.put("User-Agent", userAgent);
-        return header;
-    }
+    // private Map<String, String> getSearchHeader() {
+    //     Map<String, String> header = new HashMap<>();
+    //     header.put("User-Agent", userAgent);
+    //     return header;
+    // }
 
     private String find(Pattern pattern, String html) {
         Matcher m = pattern.matcher(html);
         return m.find() ? m.group(1).trim() : "";
     }
 
-    private JSONArray parseVodListFromDoc(String html) throws Exception {
-        JSONArray videos = new JSONArray();
+    // private JSONArray parseVodListFromDoc(String html) throws Exception {
+    private List<Vod> parseVodListFromDoc(String html) throws Exception {
+        // JSONArray videos = new JSONArray();
+        List<Vod> list = new ArrayList<>();
         Elements items = Jsoup.parse(html).select("#post_container [class=zoom]");
         for (Element item : items) {
             String vodId = item.attr("href");
             String name = removeHtmlTag(item.attr("title"));
             String pic = item.select("img").attr("src");
-            String remark = "";
+            // String remark = "";
 
-            JSONObject vod = new JSONObject();
-            vod.put("vod_id", vodId);
-            vod.put("vod_name", name);
-            vod.put("vod_pic", pic);
-            vod.put("vod_remarks", remark);
-            videos.put(vod);
+            // JSONObject vod = new JSONObject();
+            // vod.put("vod_id", vodId);
+            // vod.put("vod_name", name);
+            // vod.put("vod_pic", pic);
+            // vod.put("vod_remarks", remark);
+            // videos.put(vod);
+            list.add(new Vod(vodId, name, pic));
         }
-        return videos;
+        // return videos;
+        return list;
     }
 
     private String getActor(String html) {
@@ -166,43 +170,74 @@ public class SixV extends Spider {
 
     @Override
     public String homeContent(boolean filter) throws Exception {
-        JSONArray classes = new JSONArray();
-        List<String> typeIds = Arrays.asList("xijupian", "dongzuopian", "aiqingpian", "kehuanpian", "kongbupian", "juqingpian", "zhanzhengpian", "jilupian", "donghuapian", "dianshiju/guoju", "dianshiju/rihanju", "dianshiju/oumeiju");
-        List<String> typeNames = Arrays.asList("喜剧片", "动作片", "爱情片", "科幻片", "恐怖片", "剧情片", "战争片", "纪录片", "动画片", "国剧", "日韩剧", "欧美剧");
-        for (int i = 0; i < typeIds.size(); i++) {
-            JSONObject c = new JSONObject();
-            c.put("type_id", typeIds.get(i));
-            c.put("type_name", typeNames.get(i));
-            classes.put(c);
+        // JSONArray classes = new JSONArray();
+        List<Class> classes = new ArrayList<>();
+        // List<String> typeIds = Arrays.asList("xijupian", "dongzuopian", "aiqingpian", "kehuanpian", "kongbupian", "juqingpian", "zhanzhengpian", "jilupian", "donghuapian", "dianshiju/guoju", "dianshiju/rihanju", "dianshiju/oumeiju");
+        // List<String> typeNames = Arrays.asList("喜剧片", "动作片", "爱情片", "科幻片", "恐怖片", "剧情片", "战争片", "纪录片", "动画片", "国剧", "日韩剧", "欧美剧");
+        String[] typeIdList = {"xijupian", "dongzuopian", "aiqingpian", "kehuanpian", "kongbupian", "juqingpian", "zhanzhengpian", "jilupian", "donghuapian", "dianshiju/guoju", "dianshiju/rihanju", "dianshiju/oumeiju"};
+        String[] typeNameList = {"喜剧片", "动作片", "爱情片", "科幻片", "恐怖片", "剧情片", "战争片", "纪录片", "动画片", "国剧", "日韩剧", "欧美剧"};
+        // for (int i = 0; i < typeIds.size(); i++) {
+        //     JSONObject c = new JSONObject();
+        //     c.put("type_id", typeIds.get(i));
+        //     c.put("type_name", typeNames.get(i));
+        //     classes.put(c);
+        // }
+        for (int i = 0; i < typeNameList.length; i++) {
+            classes.add(new Class(typeIdList[i], typeNameList[i]));
         }
-        JSONObject result = new JSONObject();
-        result.put("class", classes);
-        return result.toString();
+        // JSONObject result = new JSONObject();
+        // result.put("class", classes);
+        // return result.toString();
+        return Result.string(classes);
     }
 
     @Override
     public String homeVideoContent() throws Exception {
         String html = req(siteUrl, getHeader());
-        JSONArray videos = parseVodListFromDoc(html);
-        JSONObject result = new JSONObject();
-        result.put("list", videos);
-        return result.toString();
+        // JSONArray videos = parseVodListFromDoc(html);
+        // JSONObject result = new JSONObject();
+        // result.put("list", videos);
+        // return result.toString();
+        return Result.string(parseVodListFromDoc(html));
     }
 
     @Override
     public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) throws Exception {
         String cateUrl = siteUrl + "/" + tid;
-        if (!pg.equals("1")) cateUrl += "/index_" + pg + ".html";
+        // if (!pg.equals("1")) cateUrl += "/index_" + pg + ".html";
+        if (!"1".equals(pg)) cateUrl += "/index_" + pg + ".html";
         String html = req(cateUrl, getHeader());
-        JSONArray videos = parseVodListFromDoc(html);
-        int page = Integer.parseInt(pg), count = 999, limit = videos.length(), total = Integer.MAX_VALUE;
-        JSONObject result = new JSONObject();
-        result.put("page", page);
-        result.put("pagecount", count);
-        result.put("limit", limit);
-        result.put("total", total);
-        result.put("list", videos);
-        return result.toString();
+        // JSONArray videos = parseVodListFromDoc(html);
+        List<Vod> videos = parseVodListFromDoc(html);
+        // int page = Integer.parseInt(pg), count = 999, limit = videos.length(), total = Integer.MAX_VALUE;
+        int page = Integer.parseInt(pg), count = Integer.parseInt(pg), limit = videos.size(), total = Integer.MAX_VALUE;
+        Document doc = Jsoup.parse(html);
+        Element lastNext = doc.select(".pagination .next").last();
+        if (lastNext == null) {
+            lastNext = doc.select(".pagination .current").last();
+        }
+        if (lastNext != null) {
+            String href = lastNext.attr("href");
+            if (href != null && !href.isEmpty()) {
+                // 2. 提取index_和.html之间的数字（使用正则表达式）
+                // 正则规则：匹配"index_"开头、".html"结尾的字符串，捕获中间的数字
+                Pattern pattern = Pattern.compile("index_(\\d+)\\.html");
+                Matcher matcher = pattern.matcher(href);
+                if (matcher.find()) {
+                    // 提取捕获组1的内容（数字字符串），转换为int
+                    count = Integer.parseInt(matcher.group(1));
+                }
+            }
+        }
+
+        // JSONObject result = new JSONObject();
+        // result.put("page", page);
+        // result.put("pagecount", count);
+        // result.put("limit", limit);
+        // result.put("total", total);
+        // result.put("list", videos);
+        // return result.toString();
+        return Result.get().vod(list).page(page, count, limit, total).string();
     }
 
     @Override
@@ -232,24 +267,39 @@ public class SixV extends Spider {
         remark += " 年份:" + year;
         year = "";
 
-        JSONObject vod = new JSONObject();
-        vod.put("vod_id", ids.get(0));
-        vod.put("vod_name", name);
-        vod.put("vod_pic", pic);
-        vod.put("type_name", typeName);
-        vod.put("vod_year", year);
-        vod.put("vod_area", area);
-        vod.put("vod_remarks", remark);
-        vod.put("vod_actor", actor);
-        vod.put("vod_director", director);
-        vod.put("vod_content", description);
-        if (playMap.size() > 0) {
-            vod.put("vod_play_from", TextUtils.join("$$$", playMap.keySet()));
-            vod.put("vod_play_url", TextUtils.join("$$$", playMap.values()));
-        }
-        JSONArray jsonArray = new JSONArray().put(vod);
-        JSONObject result = new JSONObject().put("list", jsonArray);
-        return result.toString();
+        // JSONObject vod = new JSONObject();
+        // vod.put("vod_id", ids.get(0));
+        // vod.put("vod_name", name);
+        // vod.put("vod_pic", pic);
+        // vod.put("type_name", typeName);
+        // vod.put("vod_year", year);
+        // vod.put("vod_area", area);
+        // vod.put("vod_remarks", remark);
+        // vod.put("vod_actor", actor);
+        // vod.put("vod_director", director);
+        // vod.put("vod_content", description);
+        // if (playMap.size() > 0) {
+        //     vod.put("vod_play_from", TextUtils.join("$$$", playMap.keySet()));
+        //     vod.put("vod_play_url", TextUtils.join("$$$", playMap.values()));
+        // }
+        // JSONArray jsonArray = new JSONArray().put(vod);
+        // JSONObject result = new JSONObject().put("list", jsonArray);
+        // return result.toString();
+
+        Vod vod = new Vod();
+        vod.setVodId(ids.get(0));
+        vod.setVodName(name);
+        vod.setVodPic(pic);
+        vod.setTypeName(typeName);
+        vod.setVodYear(year);
+        vod.setVodArea(area);
+        vod.setVodRemarks(remark);
+        vod.setVodActor(actor);
+        vod.setVodDirector(director);
+        vod.setVodContent(description);
+        vod.setVodPlayFrom(TextUtils.join("$$$", playMap.keySet()));
+        vod.setVodPlayUrl(TextUtils.join("$$$", playMap.values()));
+        return Result.string(vod);
     }
 
     @Override
@@ -284,7 +334,8 @@ public class SixV extends Spider {
         } else {
             int page = Integer.parseInt(pg) - 1;
             searchUrl = nextSearchUrlPrefix + page + nextSearchUrlSuffix;
-            html = req(searchUrl, getSearchHeader());
+            // html = req(searchUrl, getSearchHeader());
+            html = req(searchUrl, getDetailHeader());
         }
         JSONArray videos = parseVodListFromDoc(html);
         JSONObject result = new JSONObject();
