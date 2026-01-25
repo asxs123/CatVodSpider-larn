@@ -39,6 +39,7 @@ public class DyGang extends Spider {
     //   https://www.dygangs.net
     //   https://www.dygangs.me
     //   https://www.dygang.tv
+    //   编码gb2312
     private final String siteUrl = "https://www.dygangs.me";
     private String nextSearchUrlPrefix;
     private String nextSearchUrlSuffix;

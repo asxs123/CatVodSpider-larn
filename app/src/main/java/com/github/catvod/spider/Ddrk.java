@@ -35,16 +35,17 @@ import java.util.regex.Pattern;
  * Source from Author: CatVod
  * https://github.com/lushunming/AndroidCatVodSpider
  */
+//https://ddys.icu/ 推荐使用     https://ddys.dev/ 本导航页地址，请保存   https://ddysHD.com/ 本导航页备用地址
 
 public class Ddrk extends Spider {
 
-    private static String siteUrl = "https://ddys.pro";
+    private static String siteUrl = "https://ddys.icu";
 
 
     protected JSONObject filterConfig;
 
     protected Pattern regexCategory = Pattern.compile("/category/(\\S+)/");
-    protected Pattern regexVid = Pattern.compile("https://ddys.pro/(\\S+)/");
+    protected Pattern regexVid = Pattern.compile("https://ddys.icu/(\\S+)/");
 
     protected Pattern regexPage = Pattern.compile("\\S+/page/(\\S+)\\S+");
     protected Pattern m = Pattern.compile("\\S+(http\\S+g)");
