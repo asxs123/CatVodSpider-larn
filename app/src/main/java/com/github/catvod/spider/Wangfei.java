@@ -30,7 +30,7 @@ import java.util.Map;
 public class Wangfei extends Spider {
 
 
-    private static final String siteUrl = "https://www.wangfei.la";
+    private static final String siteUrl = "https://www.wfei.la";
 
 
     private HashMap<String, String> getHeaders() {
