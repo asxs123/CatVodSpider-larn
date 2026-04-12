@@ -16,7 +16,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import okhttp3.Call;
 import okhttp3.Dns;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
@@ -40,8 +39,8 @@ public class OkHttp {
         return Loader.INSTANCE;
     }
 
-    public static Response newCall(String url, String tag) throws IOException {
-        return client().newCall(new Request.Builder().url(url).tag(tag).build()).execute();
+    public static Response newCall(String url) throws IOException {
+        return client().newCall(new Request.Builder().url(url).build()).execute();
     }
 
     public static String string(String url) {
@@ -57,11 +56,13 @@ public class OkHttp {
     }
 
     public static String string(String url, Map<String, String> params, Map<String, String> header) {
-        return new OkRequest(GET, url, params, header).execute(client()).getBody();
+        return url.startsWith("http") ? new OkRequest(GET, url, params, header).execute(client()).getBody() : "";
+        // return new OkRequest(GET, url, params, header).execute(client()).getBody();
     }
 
     public static String string(String url, Map<String, String> params, Map<String, String> header, long timeout) {
-        return new OkRequest(GET, url, params, header).execute(client(timeout)).getBody();
+        return url.startsWith("http") ? new OkRequest(GET, url, params, header).execute(client(timeout)).getBody() : "";
+        // return new OkRequest(GET, url, params, header).execute(client(timeout)).getBody();
     }
 
     public static String post(String url, Map<String, String> params) {
@@ -89,23 +90,6 @@ public class OkHttp {
         if (headers.containsKey("location")) return headers.get("location").get(0);
         if (headers.containsKey("Location")) return headers.get("Location").get(0);
         return null;
-    }
-
-    public static void cancel(String tag) {
-        cancel(client(), tag);
-    }
-
-    public static void cancel(OkHttpClient client, String tag) {
-        for (Call call : client.dispatcher().queuedCalls()) if (tag.equals(call.request().tag())) call.cancel();
-        for (Call call : client.dispatcher().runningCalls()) if (tag.equals(call.request().tag())) call.cancel();
-    }
-
-    public static void cancelAll() {
-        cancelAll(client());
-    }
-
-    public static void cancelAll(OkHttpClient client) {
-        client.dispatcher().cancelAll();
     }
 
     private static OkHttpClient build() {

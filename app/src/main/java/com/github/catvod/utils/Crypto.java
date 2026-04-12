@@ -58,6 +58,36 @@ public class Crypto {
         return Base64.encodeToString(encrypted, Base64.NO_PADDING);
     }
 
+    // private static byte[] hexStringToByteArray(String hexString) {
+    //     int len = hexString.length();
+    //     byte[] data = new byte[len / 2];
+
+    //     for (int i = 0; i < len; i += 2) {
+    //         data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
+    //                 + Character.digit(hexString.charAt(i + 1), 16));
+    //     }
+
+    //     return data;
+    // }
+
+    // public static String aesEncryptPkcs7(String data, String key, String iv) throws Exception {
+    //     SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "AES");
+    //     IvParameterSpec ivSpec = new IvParameterSpec(hexStringToByteArray(iv));
+    //     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+    //     cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
+    //     byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
+    //     return Base64.encodeToString(encrypted, Base64.DEFAULT);
+    // }
+
+    // public static String aesDecryptPkcs7(String data, String key, String iv) throws Exception {
+    //     SecretKeySpec secretKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "AES");
+    //     IvParameterSpec ivSpec = new IvParameterSpec(hexStringToByteArray(iv));
+    //     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS7Padding");
+    //     cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec);
+    //     byte[] decrypted = cipher.doFinal(Base64.decode(data, Base64.DEFAULT));
+    //     return new String(decrypted, StandardCharsets.UTF_8);
+    // }
+
     public static String rsaEncrypt(String data, String publicKeyPem) throws Exception {
         String publicKeyPEM = publicKeyPem.replace("-----BEGIN PUBLIC KEY-----", "").replace("-----END PUBLIC KEY-----", "").replaceAll("\\s+", "");
         byte[] decoded = Base64.decode(publicKeyPEM, Base64.DEFAULT);

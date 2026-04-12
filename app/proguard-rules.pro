@@ -4,7 +4,6 @@
 # dontwarn
 -dontwarn org.slf4j.**
 -dontwarn org.xmlpull.v1.**
--dontwarn com.google.re2j.**
 -dontwarn android.content.res.**
 
 # slf4j

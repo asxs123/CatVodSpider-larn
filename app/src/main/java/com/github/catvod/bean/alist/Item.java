@@ -111,10 +111,6 @@ public class Item {
     }
 
     public String getVodId(String id) {
-        return id + "/" + getName();
-    }
-
-    public String getVodPath(String id) {
         return id + getPath() + "/" + getName();
     }
 
@@ -131,6 +127,6 @@ public class Item {
     }
 
     public Vod getVod(Drive drive) {
-        return new Vod(getVodPath(drive.getName()), getName(), getPic(), drive.getName(), isFolder());
+        return new Vod(getVodId(drive.getName()), getName(), getPic(), drive.getName(), isFolder());
     }
 }

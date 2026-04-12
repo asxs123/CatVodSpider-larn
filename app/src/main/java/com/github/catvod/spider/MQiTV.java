@@ -14,19 +14,19 @@ import java.util.Map;
 
 public class MQiTV extends Spider {
 
-    private List<Config> configs;
+    private static List<Config> configs;
 
-    public List<Config> getConfigs() {
+    public static List<Config> getConfigs() {
         return configs = configs == null ? new ArrayList<>() : configs;
     }
 
     @Override
-    public void init(Context context, String extend) {
+    public void init(Context context, String extend) throws Exception {
         configs = Config.arrayFrom(extend);
     }
 
     @Override
-    public String liveContent(String url) {
+    public String liveContent(String url) throws Exception {
         StringBuilder sb = new StringBuilder();
         for (Config config : getConfigs()) {
             if (config.getData().isEmpty()) continue;
@@ -34,15 +34,22 @@ public class MQiTV extends Spider {
             boolean hasPort = config.getUri().getPort() != -1;
             for (Data item : config.getData()) {
                 String port = hasPort ? item.getPort() : "5003";
-                String proxy = Proxy.getUrl(siteKey, "&id=" + item.getId() + "&ip=" + config.getUrl() + "&playing=" + item.getPlaying() + "&port=" + port + "&type=m3u8");
+                String proxy = "proxy://do=mqitv&id=" + item.getId() + "&ip=" + config.getUrl() + "&playing=" + item.getPlaying() + "&port=" + port + "&type=m3u8";
                 sb.append(item.getName()).append(",").append(proxy).append("\n");
             }
         }
         return sb.toString();
     }
 
-    @Override
-    public Object[] proxy(Map<String, String> params) {
+    private static Config getConfig(String ip) {
+        Config config = new Config(ip);
+        int index = getConfigs().indexOf(config);
+        if (index != -1) return getConfigs().get(index);
+        else getConfigs().add(config);
+        return config;
+    }
+
+    public static Object[] proxy(Map<String, String> params) {
         String ip = params.get("ip");
         String port = params.get("port");
         String playing = params.get("playing");
@@ -61,15 +68,7 @@ public class MQiTV extends Spider {
         }
     }
 
-    private Config getConfig(String ip) {
-        Config config = new Config(ip);
-        int index = getConfigs().indexOf(config);
-        if (index != -1) return getConfigs().get(index);
-        else getConfigs().add(config);
-        return config;
-    }
-
-    private Object[] get302(String location) {
+    private static Object[] get302(String location) {
         Map<String, String> header = new HashMap<>();
         header.put("Location", location);
         Object[] result = new Object[4];
@@ -80,7 +79,7 @@ public class MQiTV extends Spider {
         return result;
     }
 
-    private Object[] get200(String m3u8) {
+    private static Object[] get200(String m3u8) {
         Object[] result = new Object[3];
         result[0] = 200;
         result[1] = "application/vnd.apple.mpegurl";

@@ -39,14 +39,14 @@ import java.util.Map;
 public class Bili extends Spider {
 
     private static final String COOKIE = "buvid3=84B0395D-C9F2-C490-E92E-A09AB48FE26E71636infoc";
-    private String cookie;
+    private static String cookie;
 
     private JsonObject extend;
     private boolean login;
     private boolean isVip;
     private Wbi wbi;
 
-    private Map<String, String> getHeader() {
+    private static Map<String, String> getHeader() {
         Map<String, String> headers = new HashMap<>();
         headers.put("User-Agent", Util.CHROME);
         headers.put("Referer", "https://www.bilibili.com");
@@ -73,13 +73,13 @@ public class Bili extends Spider {
     }
 
     @Override
-    public void init(Context context, String extend) {
+    public void init(Context context, String extend) throws Exception {
         this.extend = Json.safeObject(extend);
         setCookie();
     }
 
     @Override
-    public String homeContent(boolean filter) {
+    public String homeContent(boolean filter) throws Exception {
         if (extend.has("json")) return OkHttp.string(extend.get("json").getAsString());
         List<Class> classes = new ArrayList<>();
         LinkedHashMap<String, List<Filter>> filters = new LinkedHashMap<>();
@@ -102,7 +102,7 @@ public class Bili extends Spider {
     }
 
     @Override
-    public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) {
+    public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) throws Exception {
         if (tid.endsWith("/{pg}")) {
             LinkedHashMap<String, Object> params = new LinkedHashMap<>();
             params.put("mid", tid.split("/")[0]);
@@ -125,7 +125,7 @@ public class Bili extends Spider {
     }
 
     @Override
-    public String detailContent(List<String> ids) {
+    public String detailContent(List<String> ids) throws Exception {
         if (!login) checkLogin();
 
         String[] split = ids.get(0).split("@");
@@ -178,17 +178,17 @@ public class Bili extends Spider {
     }
 
     @Override
-    public String searchContent(String key, boolean quick) {
+    public String searchContent(String key, boolean quick) throws Exception {
         return categoryContent(key, "1", true, new HashMap<>());
     }
 
     @Override
-    public String searchContent(String key, boolean quick, String pg) {
+    public String searchContent(String key, boolean quick, String pg) throws Exception {
         return categoryContent(key, pg, true, new HashMap<>());
     }
 
     @Override
-    public String playerContent(String flag, String id, List<String> vipFlags) {
+    public String playerContent(String flag, String id, List<String> vipFlags) throws Exception {
         String[] ids = id.split("\\+");
         String aid = ids[0];
         String cid = ids[1];
@@ -198,13 +198,12 @@ public class Bili extends Spider {
         String dan = "https://api.bilibili.com/x/v1/dm/list.so?oid=".concat(cid);
         for (int i = 0; i < acceptDesc.length; i++) {
             url.add(acceptDesc[i]);
-            url.add(Proxy.getUrl(siteKey, "&aid=" + aid + "&cid=" + cid + "&qn=" + acceptQuality[i] + "&type=mpd"));
+            url.add("proxy://do=bili" + "&aid=" + aid + "&cid=" + cid + "&qn=" + acceptQuality[i] + "&type=mpd");
         }
         return Result.get().url(url).danmaku(Arrays.asList(Danmaku.create().name("B站").url(dan))).dash().header(getHeader()).string();
     }
 
-    @Override
-    public Object[] proxy(Map<String, String> params) {
+    public static Object[] proxy(Map<String, String> params) {
         String aid = params.get("aid");
         String cid = params.get("cid");
         String qn = params.get("qn");
@@ -224,7 +223,7 @@ public class Bili extends Spider {
         return result;
     }
 
-    private HashMap<String, String> getAudioFormat() {
+    private static HashMap<String, String> getAudioFormat() {
         HashMap<String, String> audios = new HashMap<>();
         audios.put("30280", "192000");
         audios.put("30232", "132000");
@@ -232,7 +231,7 @@ public class Bili extends Spider {
         return audios;
     }
 
-    private void findAudio(Dash dash, StringBuilder sb) {
+    private static void findAudio(Dash dash, StringBuilder sb) {
         for (Media audio : dash.getAudio()) {
             for (String key : getAudioFormat().keySet()) {
                 if (audio.getId().equals(key)) {
@@ -242,7 +241,7 @@ public class Bili extends Spider {
         }
     }
 
-    private void findVideo(Dash dash, StringBuilder sb, String qn) {
+    private static void findVideo(Dash dash, StringBuilder sb, String qn) {
         for (Media video : dash.getVideo()) {
             if (video.getId().equals(qn)) {
                 sb.append(getMedia(video));
@@ -250,7 +249,7 @@ public class Bili extends Spider {
         }
     }
 
-    private String getMedia(Media media) {
+    private static String getMedia(Media media) {
         if (media.getMimeType().startsWith("video")) {
             return getAdaptationSet(media, String.format(Locale.getDefault(), "height='%s' width='%s' frameRate='%s' sar='%s'", media.getHeight(), media.getWidth(), media.getFrameRate(), media.getSar()));
         } else if (media.getMimeType().startsWith("audio")) {
@@ -260,14 +259,14 @@ public class Bili extends Spider {
         }
     }
 
-    private String getAdaptationSet(Media media, String params) {
+    private static String getAdaptationSet(Media media, String params) {
         String id = media.getId() + "_" + media.getCodecId();
         String type = media.getMimeType().split("/")[0];
         String baseUrl = media.getBaseUrl().replace("&", "&amp;");
         return String.format(Locale.getDefault(), "<AdaptationSet>\n" + "<ContentComponent contentType=\"%s\"/>\n" + "<Representation id=\"%s\" bandwidth=\"%s\" codecs=\"%s\" mimeType=\"%s\" %s startWithSAP=\"%s\">\n" + "<BaseURL>%s</BaseURL>\n" + "<SegmentBase indexRange=\"%s\">\n" + "<Initialization range=\"%s\"/>\n" + "</SegmentBase>\n" + "</Representation>\n" + "</AdaptationSet>", type, id, media.getBandWidth(), media.getCodecs(), media.getMimeType(), params, media.getStartWithSap(), baseUrl, media.getSegmentBase().getIndexRange(), media.getSegmentBase().getInitialization());
     }
 
-    private String getMpd(Dash dash, String videoList, String audioList) {
+    private static String getMpd(Dash dash, String videoList, String audioList) {
         return String.format(Locale.getDefault(), "<MPD xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"urn:mpeg:dash:schema:mpd:2011\" xsi:schemaLocation=\"urn:mpeg:dash:schema:mpd:2011 DASH-MPD.xsd\" type=\"static\" mediaPresentationDuration=\"PT%sS\" minBufferTime=\"PT%sS\" profiles=\"urn:mpeg:dash:profile:isoff-on-demand:2011\">\n" + "<Period duration=\"PT%sS\" start=\"PT0S\">\n" + "%s\n" + "%s\n" + "</Period>\n" + "</MPD>", dash.getDuration(), dash.getMinBufferTime(), dash.getDuration(), videoList, audioList);
     }
 

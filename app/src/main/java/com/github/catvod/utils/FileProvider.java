@@ -12,13 +12,12 @@ import android.content.res.XmlResourceParser;
 import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
-
-import androidx.annotation.NonNull;
 
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -58,16 +57,16 @@ public class FileProvider extends ContentProvider {
         synchronized (sCache) {
             sCache.remove(authority);
         }
-        mStrategy = getPathStrategy(context, authority);
+        mStrategy = getPathStrategy(context, authority, 0);
     }
 
     public static Uri getUriForFile(Context context, String authority, File file) {
-        final PathStrategy strategy = getPathStrategy(context, authority);
+        final PathStrategy strategy = getPathStrategy(context, authority, 0);
         return strategy.getUriForFile(file);
     }
 
     @Override
-    public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         final File file = mStrategy.getFileForUri(uri);
         String displayName = uri.getQueryParameter(DISPLAYNAME_FIELD);
         if (projection == null) {
@@ -93,7 +92,7 @@ public class FileProvider extends ContentProvider {
     }
 
     @Override
-    public String getType(@NonNull Uri uri) {
+    public String getType(Uri uri) {
         final File file = mStrategy.getFileForUri(uri);
         final int lastDot = file.getName().lastIndexOf('.');
         if (lastDot >= 0) {
@@ -107,36 +106,38 @@ public class FileProvider extends ContentProvider {
     }
 
     @Override
-    public Uri insert(@NonNull Uri uri, ContentValues values) {
+    public Uri insert(Uri uri, ContentValues values) {
         throw new UnsupportedOperationException("No external inserts");
     }
 
     @Override
-    public int update(@NonNull Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         throw new UnsupportedOperationException("No external updates");
     }
 
     @Override
-    public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
         final File file = mStrategy.getFileForUri(uri);
         return file.delete() ? 1 : 0;
     }
 
     @Override
-    public ParcelFileDescriptor openFile(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+    public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
         final File file = mStrategy.getFileForUri(uri);
         final int fileMode = modeToMode(mode);
         return ParcelFileDescriptor.open(file, fileMode);
     }
 
-    private static PathStrategy getPathStrategy(Context context, String authority) {
+    private static PathStrategy getPathStrategy(Context context, String authority, int resourceId) {
         PathStrategy strat;
         synchronized (sCache) {
             strat = sCache.get(authority);
             if (strat == null) {
                 try {
-                    strat = parsePathStrategy(context, authority);
-                } catch (IOException | XmlPullParserException e) {
+                    strat = parsePathStrategy(context, authority, resourceId);
+                } catch (IOException e) {
+                    throw new IllegalArgumentException("Failed to parse " + META_DATA_FILE_PROVIDER_PATHS + " meta-data", e);
+                } catch (XmlPullParserException e) {
                     throw new IllegalArgumentException("Failed to parse " + META_DATA_FILE_PROVIDER_PATHS + " meta-data", e);
                 }
                 sCache.put(authority, strat);
@@ -145,9 +146,13 @@ public class FileProvider extends ContentProvider {
         return strat;
     }
 
-    static XmlResourceParser getFileProviderPathsMetaData(Context context, String authority, ProviderInfo info) {
+    static XmlResourceParser getFileProviderPathsMetaData(Context context, String authority, ProviderInfo info, int resourceId) {
         if (info == null) {
             throw new IllegalArgumentException("Couldn't find meta-data for provider with authority " + authority);
+        }
+        if (info.metaData == null && resourceId != 0) {
+            info.metaData = new Bundle(1);
+            info.metaData.putInt(META_DATA_FILE_PROVIDER_PATHS, resourceId);
         }
         final XmlResourceParser in = info.loadXmlMetaData(context.getPackageManager(), META_DATA_FILE_PROVIDER_PATHS);
         if (in == null) {
@@ -156,10 +161,10 @@ public class FileProvider extends ContentProvider {
         return in;
     }
 
-    private static PathStrategy parsePathStrategy(Context context, String authority) throws IOException, XmlPullParserException {
+    private static PathStrategy parsePathStrategy(Context context, String authority, int resourceId) throws IOException, XmlPullParserException {
         final SimplePathStrategy strat = new SimplePathStrategy(authority);
         final ProviderInfo info = context.getPackageManager().resolveContentProvider(authority, PackageManager.GET_META_DATA);
-        final XmlResourceParser in = getFileProviderPathsMetaData(context, authority, info);
+        final XmlResourceParser in = getFileProviderPathsMetaData(context, authority, info, resourceId);
         int type;
         while ((type = in.next()) != END_DOCUMENT) {
             if (type == START_TAG) {

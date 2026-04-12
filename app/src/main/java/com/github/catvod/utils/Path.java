@@ -2,24 +2,20 @@ package com.github.catvod.utils;
 
 import android.os.Environment;
 
-import androidx.annotation.Nullable;
-
 import com.github.catvod.crawler.SpiderDebug;
+import com.github.catvod.spider.Init;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Path {
-
-    private static final String TAG = Path.class.getSimpleName();
 
     private static File mkdir(File file) {
         if (!file.exists()) file.mkdirs();
@@ -34,8 +30,20 @@ public class Path {
         return Environment.getExternalStorageDirectory();
     }
 
+    public static File cache() {
+        return Init.context().getCacheDir();
+    }
+
+    public static File files() {
+        return Init.context().getFilesDir();
+    }
+
     public static File tv() {
         return mkdir(new File(root() + File.separator + "TV"));
+    }
+
+    public static File cache(String path) {
+        return mkdir(new File(cache(), path));
     }
 
     public static File tv(String name) {
@@ -45,34 +53,26 @@ public class Path {
 
     public static String read(File file) {
         try {
-            return new String(readToByte(file), StandardCharsets.UTF_8);
-        } catch (IOException e) {
+            return read(new FileInputStream(file));
+        } catch (Exception e) {
             return "";
         }
     }
 
     public static String read(InputStream is) {
         try {
-            return new String(readToByte(is), StandardCharsets.UTF_8);
+            byte[] data = new byte[is.available()];
+            is.read(data);
+            is.close();
+            return new String(data, StandardCharsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
             return "";
         }
     }
 
-    private static byte[] readToByte(File file) throws IOException {
-        try (FileInputStream is = new FileInputStream(file)) {
-            return readToByte(is);
-        }
-    }
-
-    private static byte[] readToByte(InputStream is) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            int read;
-            byte[] buffer = new byte[16384];
-            while ((read = is.read(buffer)) != -1) bos.write(buffer, 0, read);
-            return bos.toByteArray();
-        }
+    public static File write(File file, String data) {
+        return write(file, data.getBytes());
     }
 
     public static File write(File file, byte[] data) {
@@ -82,50 +82,33 @@ public class Path {
             fos.flush();
             fos.close();
             return file;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
             return file;
         }
-    }
-
-    public static void move(File in, File out) {
-        if (in.renameTo(out)) return;
-        copy(in, out);
-        clear(in);
     }
 
     public static void copy(File in, File out) {
         try {
             copy(new FileInputStream(in), out);
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
     public static void copy(InputStream in, File out) {
         try {
             int read;
-            byte[] buffer = new byte[16384];
+            byte[] buffer = new byte[8192];
             FileOutputStream fos = new FileOutputStream(create(out));
             while ((read = in.read(buffer)) != -1) fos.write(buffer, 0, read);
             fos.close();
             in.close();
-        } catch (IOException ignored) {
+        } catch (Exception ignored) {
         }
     }
 
-    public static void sort(File[] files) {
-        Arrays.sort(files, (o1, o2) -> {
-            if (o1.isDirectory() && o2.isFile()) return -1;
-            if (o1.isFile() && o2.isDirectory()) return 1;
-            return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-        });
-    }
-
-    public static List<File> list(@Nullable File dir) {
-        if (dir == null) return new ArrayList<>();
-        File[] files = dir.listFiles();
-        if (files != null) sort(files);
-        return files == null ? new ArrayList<>() : Arrays.asList(files);
+    public static void move(File in, File out) {
+        copy(in, out);
+        clear(in);
     }
 
     public static void clear(File dir) {
@@ -134,14 +117,19 @@ public class Path {
         if (dir.delete()) SpiderDebug.log("Deleted:" + dir.getAbsolutePath());
     }
 
-    public static File create(File file) {
+    public static List<File> list(File dir) {
+        File[] files = dir.listFiles();
+        return files == null ? Collections.emptyList() : Arrays.asList(files);
+    }
+
+    public static File create(File file) throws Exception {
         try {
             if (file.getParentFile() != null) mkdir(file.getParentFile());
             if (!file.canWrite()) file.setWritable(true);
             if (!file.exists()) file.createNewFile();
             Shell.exec("chmod 777 " + file);
             return file;
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return file;
         }

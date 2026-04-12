@@ -18,6 +18,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,20 +39,33 @@ public class PTT extends Spider {
     }
 
     @Override
-    public void init(Context context, String extend) {
+    public void init(Context context, String extend) throws Exception {
         this.extend = extend;
     }
 
     @Override
-    public String homeContent(boolean filter) {
+    public String homeContent(boolean filter) throws Exception {
         Document doc = Jsoup.parse(OkHttp.string(url, getHeader()));
         List<Class> classes = new ArrayList<>();
-        for (Element a : doc.select("li > a.px-2.px-sm-3.py-2.nav-link")) classes.add(new Class(a.attr("href").replace("/p/", ""), a.text()));
+        // for (Element a : doc.select("li > a.px-2.px-sm-3.py-2.nav-link")) classes.add(new Class(a.attr("href").replace("/p/", ""), a.text()));
+        // 需要排除的关键词
+        List<String> excludeKeywords = Arrays.asList("短劇", "體育");
+        
+        for (Element a : doc.select("li > a.px-2.px-sm-3.py-2.nav-link")) {
+            String text = a.text();
+            // 检查是否包含任何需要排除的关键词
+            boolean shouldExclude = excludeKeywords.stream().anyMatch(text::contains);
+            
+            // 如果不包含排除关键词，则添加到列表
+            if (!shouldExclude) {
+                classes.add(new Class(a.attr("href").replace("/p/", ""), text));
+            }
+        }
         return Result.string(classes, TextUtils.isEmpty(extend) ? Json.parse("{}") : Json.parse(OkHttp.string(extend)));
     }
 
     @Override
-    public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) {
+    public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) throws Exception {
         Uri.Builder builder = Uri.parse(url + "p/" + tid).buildUpon();
         if (!TextUtils.isEmpty(extend.get("c"))) builder.appendEncodedPath("c/" + extend.get("c"));
         if (!TextUtils.isEmpty(extend.get("area"))) builder.appendQueryParameter("area_id", extend.get("area"));
@@ -72,7 +86,7 @@ public class PTT extends Spider {
     }
 
     @Override
-    public String detailContent(List<String> ids) {
+    public String detailContent(List<String> ids) throws Exception {
         Document doc = Jsoup.parse(OkHttp.string(url + ids.get(0) + "/1", getHeader()));
         LinkedHashMap<String, String> flags = new LinkedHashMap<>();
         List<String> playUrls = new ArrayList<>();
@@ -93,19 +107,19 @@ public class PTT extends Spider {
     }
 
     @Override
-    public String playerContent(String flag, String id, List<String> vipFlags) {
+    public String playerContent(String flag, String id, List<String> vipFlags) throws Exception {
         Matcher m = Pattern.compile("contentUrl\":\"(.*?)\"").matcher(OkHttp.string(url + id));
         if (m.find()) return Result.get().url(m.group(1).replace("\\", "")).string();
         return Result.error("");
     }
 
     @Override
-    public String searchContent(String key, boolean quick) {
+    public String searchContent(String key, boolean quick) throws Exception {
         return searchContent(key, quick, "1");
     }
 
     @Override
-    public String searchContent(String key, boolean quick, String pg) {
+    public String searchContent(String key, boolean quick, String pg) throws Exception {
         Document doc = Jsoup.parse(OkHttp.string(url + String.format("q/%s?page=%s", key, pg), getHeader()));
         List<Vod> list = new ArrayList<>();
         for (Element div : doc.select("div.card > div.embed-responsive")) {
