@@ -25,9 +25,12 @@ RUN cd /tmp \
 # 将 SDK 工具加入 PATH
 ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
 
-# 安装所需的 Android SDK 组件（accept licenses + compileSdk 36 + build-tools）
+# 安装所需的 Android SDK 组件（版本对齐 Gradle 需求）
 RUN yes | sdkmanager --licenses > /dev/null 2>&1 \
     && sdkmanager \
-       "platforms;android-36" \
-       "build-tools;36.0.0" \
+       "platforms;android-36.1" \
+       "build-tools;35.0.0" \
        "platform-tools"
+
+# ★ 关键修复：让 vscode 用户对 SDK 目录有写权限
+RUN chmod -R a+rw ${ANDROID_HOME}
