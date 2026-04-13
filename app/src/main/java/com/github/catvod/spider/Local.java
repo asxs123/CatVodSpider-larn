@@ -6,6 +6,7 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Base64;
 
 import com.github.catvod.bean.Class;
@@ -14,6 +15,7 @@ import com.github.catvod.bean.Sub;
 import com.github.catvod.bean.Vod;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.utils.Image;
+import com.github.catvod.utils.Path;
 import com.github.catvod.utils.Util;
 
 import java.io.ByteArrayInputStream;
@@ -22,7 +24,6 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +39,7 @@ public class Local extends Spider {
     }
 
     @Override
-    public String homeContent(boolean filter) throws Exception {
+    public String homeContent(boolean filter) {
         List<Class> classes = new ArrayList<>();
         classes.add(new Class(Environment.getExternalStorageDirectory().getAbsolutePath(), "本地文件", "1"));
         File[] files = new File("/storage").listFiles();
@@ -52,15 +53,9 @@ public class Local extends Spider {
     }
 
     @Override
-    public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) throws Exception {
+    public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) {
         List<Vod> items = new ArrayList<>();
-        File[] files = new File(tid).listFiles();
-        if (files == null) return Result.string(items);
-        Arrays.sort(files, (o1, o2) -> {
-            if (o1.isDirectory() && o2.isFile()) return -1;
-            if (o1.isFile() && o2.isDirectory()) return 1;
-            return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-        });
+        List<File> files = Path.list(new File(tid));
         for (File file : files) {
             if (file.getName().startsWith(".")) continue;
             if (file.isDirectory() || Util.isMedia(file.getName())) items.add(create(file));
@@ -76,17 +71,29 @@ public class Local extends Spider {
             return Result.string(create(name, url));
         } else {
             File file = new File(ids.get(0));
-            return Result.string(create(file.getName(), file.getAbsolutePath()));
+            File parent = file.getParentFile();
+            List<File> files = Path.list(parent);
+            return Result.string(create(parent != null ? parent : file, files));
         }
     }
 
     @Override
-    public String playerContent(String flag, String id, List<String> vipFlags) throws Exception {
+    public String playerContent(String flag, String id, List<String> vipFlags) {
         if (id.startsWith("http")) {
             return Result.get().url(id).string();
         } else {
             return Result.get().url("file://" + id).subs(getSubs(id)).string();
         }
+    }
+
+    @Override
+    public Object[] proxy(Map<String, String> params) {
+        String path = new String(Base64.decode(params.get("path"), Base64.DEFAULT | Base64.URL_SAFE));
+        Object[] result = new Object[3];
+        result[0] = 200;
+        result[1] = "application/octet-stream";
+        result[2] = new ByteArrayInputStream(getBase64(path));
+        return result;
     }
 
     private Vod create(String name, String url) {
@@ -100,17 +107,30 @@ public class Local extends Spider {
         return vod;
     }
 
+    private Vod create(File file, List<File> files) {
+        Vod vod = new Vod();
+        vod.setTypeName("FongMi");
+        vod.setVodId(file.getName());
+        vod.setVodName(file.getName());
+        vod.setVodPic(Image.VIDEO);
+        vod.setVodPlayFrom("播放");
+        List<String> playUrls = new ArrayList<>();
+        for (File f : files) if (Util.isMedia(f.getName())) playUrls.add(f.getName() + "$" + f.getAbsolutePath());
+        vod.setVodPlayUrl(TextUtils.join("#", playUrls));
+        return vod;
+    }
+
     private Vod create(File file) {
         Vod vod = new Vod();
         vod.setVodId(file.getAbsolutePath());
         vod.setVodName(file.getName());
-        vod.setVodPic(file.isFile() ? "proxy://do=local&path=" + Base64.encodeToString(file.getAbsolutePath().getBytes(), Base64.DEFAULT | Base64.URL_SAFE) : Image.FOLDER);
+        vod.setVodPic(file.isFile() ? Proxy.getUrl(siteKey, "&path=" + Base64.encodeToString(file.getAbsolutePath().getBytes(), Base64.DEFAULT | Base64.URL_SAFE)) : Image.FOLDER);
         vod.setVodRemarks(format.format(file.lastModified()));
         vod.setVodTag(file.isDirectory() ? "folder" : "file");
         return vod;
     }
 
-    private static byte[] getBase64(String path) {
+    private byte[] getBase64(String path) {
         Bitmap bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Images.Thumbnails.MINI_KIND);
         if (bitmap == null) return Base64.decode(Image.VIDEO.split("base64,")[1], Base64.DEFAULT);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -119,23 +139,11 @@ public class Local extends Spider {
     }
 
     private List<Sub> getSubs(String path) {
-        File file = new File(path);
-        File[] files = file.getParentFile() == null ? null : file.getParentFile().listFiles();
-        if (files == null || files.length == 0) return Collections.emptyList();
         List<Sub> subs = new ArrayList<>();
-        for (File f : files) {
+        for (File f : Path.list(new File(path).getParentFile())) {
             String ext = Util.getExt(f.getName());
             if (Util.isSub(ext)) subs.add(Sub.create().name(Util.removeExt(f.getName())).ext(ext).url("file://" + f.getAbsolutePath()));
         }
         return subs;
-    }
-
-    public static Object[] proxy(Map<String, String> params) {
-        String path = new String(Base64.decode(params.get("path"), Base64.DEFAULT | Base64.URL_SAFE));
-        Object[] result = new Object[3];
-        result[0] = 200;
-        result[1] = "application/octet-stream";
-        result[2] = new ByteArrayInputStream(getBase64(path));
-        return result;
     }
 }

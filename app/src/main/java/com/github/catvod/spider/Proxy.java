@@ -13,21 +13,9 @@ public class Proxy {
     private static Method method;
     private static int port;
 
-    public static Object[] proxy(Map<String, String> params) throws Exception {
-        switch (params.get("do")) {
-            case "ck":
-                return new Object[]{200, "text/plain; charset=utf-8", new ByteArrayInputStream("ok".getBytes(StandardCharsets.UTF_8))};
-            case "mqitv":
-                return MQiTV.proxy(params);
-            case "bili":
-                return Bili.proxy(params);
-            case "webdav":
-                return WebDAV.vod(params);
-            case "local":
-                return Local.proxy(params);
-            default:
-                return null;
-        }
+    public static Object[] proxy(Map<String, String> params) {
+        if ("ck".equals(params.get("do"))) return new Object[]{200, "text/plain; charset=utf-8", new ByteArrayInputStream("ok".getBytes(StandardCharsets.UTF_8))};
+        return null;
     }
 
     public static void init() {
@@ -43,6 +31,10 @@ public class Proxy {
 
     public static int getPort() {
         return port;
+    }
+
+    public static String getUrl(String siteKey, String param) {
+        return "proxy://do=csp&siteKey=" + siteKey + param;
     }
 
     public static String getUrl() {
