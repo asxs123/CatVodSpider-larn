@@ -7,13 +7,15 @@ android {
     namespace 'com.github.catvod'
 
     compileSdk {
-        version = release(34)
+        version = release(36) {
+            it.minorApiLevel = 1
+        }
     }
 
     defaultConfig {
         applicationId "com.github.catvod.demo"
         minSdk 16
-        targetSdk 34
+        targetSdk 36
     }
 
     buildFeatures {
