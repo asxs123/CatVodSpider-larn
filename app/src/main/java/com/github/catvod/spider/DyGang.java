@@ -24,6 +24,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 /**
  * @author zhixc
  * 电影港
@@ -58,10 +62,27 @@ public class DyGang extends Spider {
         return header;
     }
 
+    // ========== 修改开始：req() 方法 ==========
+    // 原来的写法（UTF-8）：
+    //   private String req(String url, Map<String, String> header) throws Exception {
+    //       return OkHttp.string(url, header);
+    //   }
+    //
+    // 改为：直接用 OkHttp.client() 发请求，拿到原始字节数组后用 GB2312 解码
     private String req(String url, Map<String, String> header) throws Exception {
-        // 使用项目中的OkHttp库发送GET请求
-        return OkHttp.string(url, header);
+        OkHttpClient client = OkHttp.client();
+        Request.Builder builder = new Request.Builder().url(url);
+        if (header != null) {
+            for (Map.Entry<String, String> entry : header.entrySet()) {
+                builder.addHeader(entry.getKey(), entry.getValue());
+            }
+        }
+        try (Response response = client.newCall(builder.build()).execute()) {
+            byte[] bytes = response.body().bytes();
+            return new String(bytes, "GB2312");
+        }
     }
+    // ========== 修改结束 ==========
 
     private String find(Pattern pattern, String html) {
         Matcher m = pattern.matcher(html);
@@ -258,11 +279,11 @@ public class DyGang extends Spider {
             headers.put("Referer", siteUrl+"/");
             headers.put("Upgrade-Insecure-Requests", "1");
             headers.put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36");
-            
+
             String requestBody = "tempid=1&tbname=article&keyboard=" + URLEncoder.encode(key, "GBK") + "&show=title%2Csmalltext&Submit=%CB%D1%CB%F7";
             // 修复post方法返回类型问题，OkHttp.post返回OkResult类型，需要调用getBody()获取String内容
             html = OkHttp.post(searchUrl, requestBody, headers).getBody();
-            
+
             // 获取重定向后的URL信息用于分页
             // 修复不存在的getRedirectUrl方法，使用getLocation方法
             try {
