@@ -84,8 +84,9 @@ check_prerequisites() {
 cleanup_temp() {
     info "清理临时文件..."
     rm -rf "$SMALI_DIR"
-    rm -rf "$SPIDER_JAR_DIR/smali/com/github/catvod/spider"
-    rm -rf "$SPIDER_JAR_DIR/smali/com/github/catvod/js"
+    # rm -rf "$SPIDER_JAR_DIR/smali/com/github/catvod/spider"
+    # rm -rf "$SPIDER_JAR_DIR/smali/com/github/catvod/js"
+    rm -rf "$SPIDER_JAR_DIR/smali"
     rm -rf "$SPIDER_JAR_DIR/org/slf4j"
     rm -rf "$SPIDER_JAR_DIR/build"
     rm -rf "$SPIDER_JAR_DIR/dist"
