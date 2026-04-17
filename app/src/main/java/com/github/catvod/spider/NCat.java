@@ -63,7 +63,7 @@ public class NCat extends Spider {
                 }
             }
             // 重新请求
-            html = okhttp3.OkHttpUtils.get(url, getHeaders());
+            // html = okhttp3.OkHttpUtils.get(url, getHeaders());
             html = OkHttp.string(url, getHeaders());
         }
         return html;

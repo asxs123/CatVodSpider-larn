@@ -70,7 +70,8 @@ public class DyGang extends Spider {
     //
     // 改为：直接用 OkHttp.client() 发请求，拿到原始字节数组后用 GB2312 解码
     private String req(String url, Map<String, String> header) throws Exception {
-        OkHttpClient client = OkHttp.client();
+        // OkHttpClient client = OkHttp.client();
+        private OkHttpClient client;
         Request.Builder builder = new Request.Builder().url(url);
         if (header != null) {
             for (Map.Entry<String, String> entry : header.entrySet()) {
