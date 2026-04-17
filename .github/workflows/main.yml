@@ -11,6 +11,7 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
       with:
+        ref: ${{ github.ref }}  # 检出当前分支
         submodules: recursive  # 如果有子模块
 
     - name: 设置 Java 环境
@@ -24,10 +25,8 @@ jobs:
       uses: android-actions/setup-android@v3
       with:
         cmdline-tools-version: "latest"
-        build-tools-version: "35.0.0"
-        ndk-version: "26.1.10909125"
         # 只安装必要的组件，跳过 emulator
-        components: |
+        packages: |
           platforms;android-36.1
           build-tools;35.0.0
           platform-tools
