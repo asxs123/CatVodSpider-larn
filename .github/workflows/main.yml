@@ -18,7 +18,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         # 优先使用手动输入的分支，否则使用触发事件的分支
-        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+        ref: ${{ github.event.inputs.branch || github.ref_name }}
         submodules: recursive
         fetch-depth: 0
 
