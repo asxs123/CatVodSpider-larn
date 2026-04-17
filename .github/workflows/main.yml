@@ -26,6 +26,11 @@ jobs:
         cmdline-tools-version: "latest"
         build-tools-version: "35.0.0"
         ndk-version: "26.1.10909125"
+        # 只安装必要的组件，跳过 emulator
+        components: |
+          platforms;android-36.1
+          build-tools;35.0.0
+          platform-tools
 
     - name: 安装必要的工具
       run: |
