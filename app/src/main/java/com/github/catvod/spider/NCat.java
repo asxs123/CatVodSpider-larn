@@ -8,7 +8,7 @@ import com.github.catvod.net.OkHttp;
 // import com.github.catvod.utils.AESEncryption;
 import com.github.catvod.utils.Crypto;
 import com.github.catvod.utils.Util;
-import org.apache.commons.lang3.StringUtils;
+// import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -193,9 +193,12 @@ public class NCat extends Spider {
             } else {
                 srcUrl = "";
             }
-            if (StringUtils.isNoneBlank(srcUrl)) {
-                return Result.get().url(srcUrl).header(getHeaders()).string();
+            // if (StringUtils.isNoneBlank(srcUrl)) {
+            //     return Result.get().url(srcUrl).header(getHeaders()).string();
 
+            // }
+            if (srcUrl != null && !srcUrl.trim().isEmpty()) {
+                return Result.get().url(srcUrl).header(getHeaders()).string();
             }
             String js = playSourceMatcher.group(1);
 
@@ -203,7 +206,10 @@ public class NCat extends Spider {
             Pattern pattern1 = Pattern.compile(regex1);
             // String jsSource = Util.unicodeToString(js);
             String jsSource = "";
-            if (StringUtils.isBlank(js)) {
+            // if (StringUtils.isBlank(js)) {
+            //     jsSource = js;
+            // }
+            if (js == null || js.isEmpty() || js.trim().isEmpty()) {
                 jsSource = js;
             }
             Matcher matcher1 = pattern1.matcher(jsSource);
