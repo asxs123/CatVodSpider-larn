@@ -2,6 +2,12 @@ name: Build CatVodSpider
 
 on:
   workflow_dispatch:  # 允许手动触发
+    inputs:
+      branch:
+        description: '要编译的分支'
+        required: true
+        default: 'main'
+        type: string
 
 jobs:
   build:
@@ -11,8 +17,22 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.ref }}  # 检出当前分支
-        submodules: recursive  # 如果有子模块
+        # 优先使用手动输入的分支，否则使用触发事件的分支
+        ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.branch || github.ref }}
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: 验证分支信息
+      run: |
+        echo "=== 构建信息 ==="
+        echo "事件类型: ${{ github.event_name }}"
+        echo "触发分支: ${{ github.ref_name }}"
+        echo "手动输入分支: ${{ github.event.inputs.branch || 'N/A' }}"
+        echo "当前分支: $(git branch --show-current)"
+        echo "最近提交: $(git log -1 --oneline)"
+        echo "SHA: $(git rev-parse HEAD)"
+        echo "=== 文件结构 ==="
+        ls -la | head -20
 
     - name: 设置 Java 环境
       uses: actions/setup-java@v4
