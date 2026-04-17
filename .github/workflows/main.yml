@@ -23,14 +23,6 @@ jobs:
 
     - name: 设置 Android SDK
       uses: android-actions/setup-android@v3
-      with:
-        cmdline-tools-version: "latest"
-        # 只安装必要的组件，跳过 emulator
-        packages: |
-          platforms;android-35
-          build-tools;35.0.0
-          platform-tools
-        accept-android-sdk-licenses: true
 
     - name: 安装必要的工具
       run: |
