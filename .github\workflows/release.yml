@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Generate Spider JAR
+        run: |
+          APKTOOL="jar/3rd/apktool_2.11.0.jar"
+          APK="app/build/outputs/apk/release/app-release-unsigned.apk"
+          OUT="jar"
+
+          if [ ! -f "$APKTOOL" ]; then
+            mkdir -p jar/3rd
+            wget -q https://github.com/iBotPeaches/Apktool/releases/download/v2.11.0/apktool_2.11.0.jar -O "$APKTOOL"
+          fi
+
+          java -jar "$APKTOOL" d -f --only-main-classes "$APK" -o "$OUT/Smali_classes"
+          rm -rf "$OUT/spider.jar/smali/com/github/catvod/spider"
+          rm -rf "$OUT/spider.jar/smali/com/github/catvod/js"
+          rm -rf "$OUT/spider.jar/smali/org/slf4j"
+          mkdir -p "$OUT/spider.jar/smali/com/github/catvod/"
+          mkdir -p "$OUT/spider.jar/smali/org/slf4j/"
+          mv "$OUT/Smali_classes/smali/com/github/catvod/spider" "$OUT/spider.jar/smali/com/github/catvod/"
+          mv "$OUT/Smali_classes/smali/com/github/catvod/js"     "$OUT/spider.jar/smali/com/github/catvod/"
+          mv "$OUT/Smali_classes/smali/org/slf4j"                "$OUT/spider.jar/smali/org/slf4j/"
+          java -jar "$APKTOOL" b "$OUT/spider.jar" -c
+          mv "$OUT/spider.jar/dist/dex.jar" "$OUT/custom_spider.jar"
+          rm -rf "$OUT/Smali_classes" "$OUT/spider.jar/build" "$OUT/spider.jar/smali" "$OUT/spider.jar/dist"
+
+          MD5=$(md5sum "$OUT/custom_spider.jar" | cut -d' ' -f1)
+          echo "$MD5" > "$OUT/custom_spider.jar.md5"
+          echo "✅ JAR MD5: $MD5"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            jar/custom_spider.jar
+            jar/custom_spider.jar.md5
+          generate_release_notes: true

@@ -32,11 +32,58 @@ public class NCat extends Spider {
     private static final String searchUrl = siteUrl + "/search?k=";
     private static final String playUrl = siteUrl + "/play/";
 
+    private static HashMap<String, String> cookies = new HashMap<>();
+
     private HashMap<String, String> getHeaders() {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("User-Agent", Util.CHROME);
+        if (!cookies.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String key : cookies.keySet()) {
+                sb.append(key).append("=").append(cookies.get(key)).append("; ");
+            }
+            headers.put("Cookie", sb.toString());
+        }
         return headers;
     }
+
+    // =============== 核心：自动过 cdndefend ===============
+    private String fetchUrl(String url) throws Exception {
+        // HashMap<String, String> headers = getHeaders();
+        // String html = okhttp3.OkHttpUtils.get(url, headers);
+        String html = OkHttp.string(url, getHeaders());
+
+        // 检测是否是 cdndefend 验证页面
+        if (html.contains("cdndefend") && html.contains("verifying your browser")) {
+            String cookie = resolveCdndefend(html);
+            if (cookie != null && !cookie.isEmpty()) {
+                String[] kv = cookie.split("=", 2);
+                if (kv.length == 2) {
+                    cookies.put(kv[0], kv[1]);
+                }
+            }
+            // 重新请求
+            html = okhttp3.OkHttpUtils.get(url, getHeaders());
+            html = OkHttp.string(url, getHeaders());
+        }
+        return html;
+    }
+
+    // 解析 cdndefend 页面，自动拿到验证 cookie
+    private String resolveCdndefend(String html) {
+        try {
+            Pattern pattern = Pattern.compile("cdndefend_js_cookie=([0-9a-zA-Z]+)");
+            Matcher matcher = pattern.matcher(html);
+            if (matcher.find()) {
+                return "cdndefend_js_cookie=" + matcher.group(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // ======================================================
 
     @Override
     public String homeContent(boolean filter) throws Exception {
@@ -47,7 +94,11 @@ public class NCat extends Spider {
         for (int i = 0; i < typeNameList.length; i++) {
             classes.add(new Class(typeIdList[i], typeNameList[i]));
         }
-        Document doc = Jsoup.parse(OkHttp.string(siteUrl, getHeaders()));
+
+        // 替换成自动过验证的请求
+        // Document doc = Jsoup.parse(OkHttp.string(siteUrl, getHeaders()));
+        Document doc = Jsoup.parse(fetchUrl(siteUrl));
+
         for (Element element : doc.select("div.module-item")) {
             try {
                 String pic = element.select("img").last().attr("data-original");
@@ -69,7 +120,8 @@ public class NCat extends Spider {
     public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) throws Exception {
         List<Vod> list = new ArrayList<>();
         String target = cateUrl + tid + "-----3-" + pg + ".html";
-        Document doc = Jsoup.parse(OkHttp.string(target, getHeaders()));
+        Document doc = Jsoup.parse(fetchUrl(target));
+        // Document doc = Jsoup.parse(OkHttp.string(target, getHeaders()));
         for (Element element : doc.select("div.module-item")) {
             try {
                 String pic = element.select("img").last().attr("data-original");
@@ -85,12 +137,13 @@ public class NCat extends Spider {
             }
         }
         Integer total = (Integer.parseInt(pg) + 1) * 20;
-        return Result.get().page(Integer.parseInt(pg),Integer.parseInt(pg) + 1,20,total).vod(list).string();
+        return Result.get().page(Integer.parseInt(pg), Integer.parseInt(pg) + 1, 20, total).vod(list).string();
     }
 
     @Override
     public String detailContent(List<String> ids) throws Exception {
-        Document doc = Jsoup.parse(OkHttp.string(detailUrl.concat(ids.get(0)), getHeaders()));
+        Document doc = Jsoup.parse(fetchUrl(detailUrl.concat(ids.get(0))));
+        // Document doc = Jsoup.parse(OkHttp.string(detailUrl.concat(ids.get(0)), getHeaders()));
         String name = doc.select("div.detail-title strong").text().replace("𝕜𝕜𝕪𝕤𝟘𝟙.𝕔𝕠𝕞", "").trim();
         String pic = doc.select(".detail-pic img").last().attr("data-original");
         String year = doc.select("a.detail-tags-item").get(0).text();
@@ -139,7 +192,8 @@ public class NCat extends Spider {
     @Override
     public String searchContent(String key, boolean quick) throws Exception {
         String searchToken = "";
-        Document searchdoc = Jsoup.parse(OkHttp.string(siteUrl, getHeaders()));
+        Document searchdoc = Jsoup.parse(fetchUrl(siteUrl));
+        // Document searchdoc = Jsoup.parse(OkHttp.string(siteUrl, getHeaders()));
         searchToken = searchdoc.select("div.search-tag a").first().attr("href");
         // 提取t参数值
         if (searchToken.contains("t=")) {
@@ -150,7 +204,8 @@ public class NCat extends Spider {
         }
 
         List<Vod> list = new ArrayList<>();
-        Document doc = Jsoup.parse(OkHttp.string(searchUrl.concat(URLEncoder.encode(key)).concat("&t=").concat(searchToken), getHeaders()));
+        Document doc = Jsoup.parse(fetchUrl(searchUrl.concat(URLEncoder.encode(key)).concat("&t=").concat(searchToken)));
+        // Document doc = Jsoup.parse(OkHttp.string(searchUrl.concat(URLEncoder.encode(key)).concat("&t=").concat(searchToken), getHeaders()));
         for (Element element : doc.select("a.search-result-item")) {
             try {
                 String pic = element.select("img").first().attr("data-original");
@@ -163,6 +218,7 @@ public class NCat extends Spider {
                 String id = url.split("/")[2];
                 list.add(new Vod(id, name, pic));
             } catch (Exception e) {
+
             }
         }
         return Result.string(list);
@@ -170,7 +226,8 @@ public class NCat extends Spider {
 
     @Override
     public String playerContent(String flag, String id, List<String> vipFlags) throws Exception {
-        Document doc = Jsoup.parse(OkHttp.string(playUrl.concat(id), getHeaders()));
+        Document doc = Jsoup.parse(fetchUrl(playUrl.concat(id)));
+        // Document doc = Jsoup.parse(OkHttp.string(playUrl.concat(id), getHeaders()));
         String regex = "window.whatTMDwhatTMDPPPP = '(.*?)'";
         String playSource = "playSource=\\{(.*?)\\}";
         Pattern pattern = Pattern.compile(regex);
