@@ -47,6 +47,8 @@ public class DyGang extends Spider {
     private String nextSearchUrlPrefix;
     private String nextSearchUrlSuffix;
 
+    private OkHttpClient client;
+
     private final String userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36";
 
     private Map<String, String> getHeader() {
@@ -71,7 +73,6 @@ public class DyGang extends Spider {
     // 改为：直接用 OkHttp.client() 发请求，拿到原始字节数组后用 GB2312 解码
     private String req(String url, Map<String, String> header) throws Exception {
         // OkHttpClient client = OkHttp.client();
-        private OkHttpClient client;
         Request.Builder builder = new Request.Builder().url(url);
         if (header != null) {
             for (Map.Entry<String, String> entry : header.entrySet()) {
