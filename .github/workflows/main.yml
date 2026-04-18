@@ -2,12 +2,6 @@ name: Build CatVodSpider
 
 on:
   workflow_dispatch:  # 允许手动触发
-    inputs:
-      branch:
-        description: '要编译的分支'
-        required: true
-        default: 'main'
-        type: string
 
 jobs:
   build:
@@ -17,8 +11,8 @@ jobs:
     - name: 检出代码
       uses: actions/checkout@v4
       with:
-        # 优先使用手动输入的分支，否则使用触发事件的分支
-        ref: ${{ github.event.inputs.branch || github.ref_name }}
+        # 使用触发事件的分支
+        ref: ${{ github.ref_name }}
         submodules: recursive
         fetch-depth: 0
 
@@ -27,7 +21,6 @@ jobs:
         echo "=== 构建信息 ==="
         echo "事件类型: ${{ github.event_name }}"
         echo "触发分支: ${{ github.ref_name }}"
-        echo "手动输入分支: ${{ github.event.inputs.branch || 'N/A' }}"
         echo "当前分支: $(git branch --show-current)"
         echo "最近提交: $(git log -1 --oneline)"
         echo "SHA: $(git rev-parse HEAD)"
@@ -169,14 +162,20 @@ jobs:
         path: |
           jar/custom_spider.jar
           jar/custom_spider.jar.md5
-          app/build/outputs/apk/release/app-release-unsigned.apk
         retention-days: 30
 
     - name: 构建状态通知
       if: always()
       run: |
-        if [ ${{ job.status }} == 'success' ]; then
+        if [ "${{ job.status }}" == "success" ]; then
           echo "✅ 构建成功！"
+          if [ -f "jar/custom_spider.jar.md5" ]; then
+            MD5=$(cat jar/custom_spider.jar.md5)
+            echo "### custom_spider.jar.md5" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "$MD5" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "产物已上传到 Actions artifacts"
         else
           echo "❌ 构建失败！"

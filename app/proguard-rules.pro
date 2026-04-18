@@ -37,3 +37,8 @@
 
 # Logger
 -keep class com.orhanobut.logger.** { *; }
+
+# Gson（2.10.1 无内置混淆规则，需手动保留，为适配安卓4.4所加）
+-keepattributes Signature
+-keepattributes *Annotation*, InnerClasses, EnclosingMethod
+-keep class com.github.catvod.bean.** { *; }
