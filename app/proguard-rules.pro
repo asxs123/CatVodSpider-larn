@@ -42,3 +42,7 @@
 -keepattributes Signature
 -keepattributes *Annotation*, InnerClasses, EnclosingMethod
 -keep class com.github.catvod.bean.** { *; }
+-keep class com.google.gson.stream.** { *; }
+-keep class com.google.gson.internal.** { *; }
+-keep class com.google.gson.reflect.** { *; }
+-keep class com.google.gson.annotations.** { *; }

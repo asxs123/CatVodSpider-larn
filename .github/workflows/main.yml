@@ -155,13 +155,18 @@ jobs:
           echo "MD5:  $(cat jar/custom_spider.jar.md5)"
         fi
 
-    - name: 上传构建产物
+    - name: 上传 custom_spider.jar
       uses: actions/upload-artifact@v4
       with:
-        name: catvodspider-build
-        path: |
-          jar/custom_spider.jar
-          jar/custom_spider.jar.md5
+        name: custom_spider.jar
+        path: jar/custom_spider.jar
+        retention-days: 30
+
+    - name: 上传 app-release-unsigned.apk
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-unsigned.apk
+        path: app/build/outputs/apk/release/app-release-unsigned.apk
         retention-days: 30
 
     - name: 构建状态通知

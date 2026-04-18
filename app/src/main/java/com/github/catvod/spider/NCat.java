@@ -4,6 +4,7 @@ import com.github.catvod.bean.Class;
 import com.github.catvod.bean.Result;
 import com.github.catvod.bean.Vod;
 import com.github.catvod.crawler.Spider;
+import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.net.OkHttp;
 // import com.github.catvod.utils.AESEncryption;
 import com.github.catvod.utils.Crypto;
@@ -52,10 +53,12 @@ public class NCat extends Spider {
         // HashMap<String, String> headers = getHeaders();
         // String html = okhttp3.OkHttpUtils.get(url, headers);
         String html = OkHttp.string(url, getHeaders());
+        SpiderDebug.log(html);
 
         // 检测是否是 cdndefend 验证页面
         if (html.contains("cdndefend") && html.contains("verifying your browser")) {
             String cookie = resolveCdndefend(html);
+            SpiderDebug.log(cookie);
             if (cookie != null && !cookie.isEmpty()) {
                 String[] kv = cookie.split("=", 2);
                 if (kv.length == 2) {
@@ -65,6 +68,7 @@ public class NCat extends Spider {
             // 重新请求
             // html = okhttp3.OkHttpUtils.get(url, getHeaders());
             html = OkHttp.string(url, getHeaders());
+            SpiderDebug.log(html);
         }
         return html;
     }
@@ -79,6 +83,7 @@ public class NCat extends Spider {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            SpiderDebug.log(e);
         }
         return null;
     }
