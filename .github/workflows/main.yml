@@ -143,11 +143,11 @@ jobs:
         fi
 
         # 清理临时文件
-        rm -rf jar/Smali_classes
-        rm -rf jar/spider.jar/smali
-        rm -rf jar/spider.jar/org/slf4j
-        rm -rf jar/spider.jar/build
-        rm -rf jar/spider.jar/dist
+        # rm -rf jar/Smali_classes
+        # rm -rf jar/spider.jar/smali
+        # rm -rf jar/spider.jar/org/slf4j
+        # rm -rf jar/spider.jar/build
+        # rm -rf jar/spider.jar/dist
 
         echo "===== 生成完成 ====="
         echo "产物: jar/custom_spider.jar"
@@ -159,7 +159,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: custom_spider.jar
-        path: jar/custom_spider.jar
+        path: jar/
         retention-days: 30
 
     - name: 上传 app-release-unsigned.apk
