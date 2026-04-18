@@ -1,0 +1,10 @@
+{
+  "name": "CatVodSpider Build Environment",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup-android.sh",
+
+  "remoteUser": "vscode"
+}
