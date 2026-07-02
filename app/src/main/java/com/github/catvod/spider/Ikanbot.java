@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class Ikanbot extends Spider {
 
     // private static final String siteUrl = "https://v.ikanbot.com";
-    private static final String siteUrl = "https://www.ikanbot.com/";
+    private static final String siteUrl = "https://www.ikanbot.com";
     private static final String cateUrl = siteUrl + "/hot";
     private static final String detailUrl = siteUrl + "/play/";
     private static final String searchUrl = siteUrl + "/search?q=";
@@ -41,7 +41,7 @@ public class Ikanbot extends Spider {
     private List<Vod> parseVods(Document doc) {
         List<Vod> list = new ArrayList<>();
         for (Element element : doc.select("a.item")) {
-            String pic = element.select("img").attr("data-src");
+            String pic = element.select("img").attr("data-src") + "@Referer=https://api.douban.com/@User-Agent=" + Util.CHROME;
             // String url = element.attr("href");
             String name = element.select("img").attr("alt");
             // String id = url.split("/")[2];
@@ -63,7 +63,7 @@ public class Ikanbot extends Spider {
         Document doc = Jsoup.parse(OkHttp.string(siteUrl + "/billboard.html", getHeaders()));
         List<Vod> list = new ArrayList<>();
         for (Element element : doc.select("div.item-root")) {
-            String pic = element.select("img").attr("data-src");
+            String pic = element.select("img").attr("data-src") + "@Referer=https://api.douban.com/@User-Agent=" + Util.CHROME;
             // String url = element.select("a").attr("href");
             String url = element.select("img").attr("id");
             String name = element.select("img").attr("alt");
@@ -73,7 +73,7 @@ public class Ikanbot extends Spider {
             // } catch (Exception e) {
             //     e.printStackTrace();
             // }
-            list.add(new Vod(url, name, pic, "vod_remarks", "vod_actor"));
+            list.add(new Vod(url, name, pic));
         }
         return Result.string(classes, list, filter ? JsonParser.parseString(filters) : null);
     }
@@ -99,7 +99,7 @@ public class Ikanbot extends Spider {
     public String detailContent(List<String> ids) throws Exception {
         Document doc = Jsoup.parse(OkHttp.string(detailUrl.concat(ids.get(0)), getHeaders()));
         String name = doc.select("h1").text();
-        String pic = doc.select("meta[property=og:image]").attr("content");
+        String pic = doc.select("meta[property=og:image]").attr("content") + "@Referer=https://api.douban.com/@User-Agent=" + Util.CHROME;
         Elements desc = doc.select("div.detail > h3");
         String year = desc.get(1).text();
         String area = desc.get(2).text();
@@ -150,10 +150,6 @@ public class Ikanbot extends Spider {
         vod.setVodName(name);
         vod.setVodPlayFrom(PlayFrom);
         vod.setVodPlayUrl(PlayUrl.replace("##", "#").replace("#$$$", "$$$"));
-        vod.setTypeName("type_name");
-        vod.setVodRemarks("vod_remarks");
-        vod.setVodDirector("vod_director");
-        vod.setVodContent("vod_content");
         return Result.string(vod);
     }
 
@@ -162,7 +158,7 @@ public class Ikanbot extends Spider {
         Document doc = Jsoup.parse(OkHttp.string(searchUrl.concat(URLEncoder.encode(key, "UTF-8")), getHeaders()));
         List<Vod> list = new ArrayList<>();
         for (Element element : doc.select("a.cover-link")) {
-            String pic = element.select("img").attr("data-src");
+            String pic = element.select("img").attr("data-src") + "@Referer=https://api.douban.com/@User-Agent=" + Util.CHROME;
             String url = element.attr("href");
             String name = element.select("img").attr("alt");
             String id = url.split("/")[2];
